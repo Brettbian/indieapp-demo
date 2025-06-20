@@ -162,22 +162,21 @@ def ai_chat_page():
     
     context = "\n\n".join([f"File: {filename}\n{content}" for filename, content in st.session_state.uploaded_files_content.items()])
     
-    # Show files being used as context with delete option
-    st.subheader(f"📚 Context Files ({len(st.session_state.uploaded_files_content)} files)")
-    
-    filenames = list(st.session_state.uploaded_files_content.keys())
-    for filename in filenames:
-        if filename not in st.session_state.uploaded_files_content:
-            continue
-            
-        col1, col2 = st.columns([5, 1])
-        with col1:
-            st.write(f"📄 {filename}")
-        with col2:
-            if st.button("🗑️", key=f"delete_chat_{filename}", help=f"Remove {filename} from context"):
-                st.session_state.deleted_files.add(filename)
-                del st.session_state.uploaded_files_content[filename]
-                st.rerun()
+    # Show compact context files summary
+    with st.expander(f"📚 Context Files ({len(st.session_state.uploaded_files_content)} files) - Click to manage"):
+        filenames = list(st.session_state.uploaded_files_content.keys())
+        for filename in filenames:
+            if filename not in st.session_state.uploaded_files_content:
+                continue
+                
+            col1, col2 = st.columns([5, 1])
+            with col1:
+                st.write(f"📄 {filename}")
+            with col2:
+                if st.button("🗑️", key=f"delete_chat_{filename}", help=f"Remove {filename} from context"):
+                    st.session_state.deleted_files.add(filename)
+                    del st.session_state.uploaded_files_content[filename]
+                    st.rerun()
     
     if 'messages' not in st.session_state:
         st.session_state.messages = []
@@ -224,31 +223,38 @@ def ai_generation_page():
         st.warning("Please set deployment name in Settings page.")
         return
     
-    # Show context files if any
+    # Show compact context files summary if any
     if st.session_state.uploaded_files_content:
-        st.subheader(f"📚 Available Context Files ({len(st.session_state.uploaded_files_content)} files)")
-        
-        filenames = list(st.session_state.uploaded_files_content.keys())
-        for filename in filenames:
-            if filename not in st.session_state.uploaded_files_content:
-                continue
-                
-            col1, col2 = st.columns([5, 1])
-            with col1:
-                st.write(f"📄 {filename}")
-            with col2:
-                if st.button("🗑️", key=f"delete_gen_{filename}", help=f"Remove {filename}"):
-                    st.session_state.deleted_files.add(filename)
-                    del st.session_state.uploaded_files_content[filename]
-                    st.rerun()
-        
-        st.markdown("---")
+        with st.expander(f"📚 Available Context Files ({len(st.session_state.uploaded_files_content)} files) - Click to manage"):
+            filenames = list(st.session_state.uploaded_files_content.keys())
+            for filename in filenames:
+                if filename not in st.session_state.uploaded_files_content:
+                    continue
+                    
+                col1, col2 = st.columns([5, 1])
+                with col1:
+                    st.write(f"📄 {filename}")
+                with col2:
+                    if st.button("🗑️", key=f"delete_gen_{filename}", help=f"Remove {filename}"):
+                        st.session_state.deleted_files.add(filename)
+                        del st.session_state.uploaded_files_content[filename]
+                        st.rerun()
     
     if st.button("🚀 Generate Business Plan", type="primary"):
-        with st.spinner("Generating your stunning business plan..."):
+        with st.spinner("Generating your stunning business plan... DO NOT GO AWAY!"):
             try:
-                business_plan_prompt = """
+                # Build context from uploaded files
+                context = ""
+                if st.session_state.uploaded_files_content:
+                    context = "\n\nCONTEXT FROM UPLOADED FILES:\n" + "\n\n".join([f"File: {filename}\n{content}" for filename, content in st.session_state.uploaded_files_content.items()])
+                
+                business_plan_prompt = f"""
                 Create a comprehensive, visually appealing HTML business plan that will dazzle investors. 
+                
+                {context}
+                
+                Use the uploaded files as context to inform the business plan. If no files are uploaded, create a fictional innovative tech startup.
+                
                 The HTML should include:
                 
                 1. Modern CSS styling with gradients, shadows, and professional typography
@@ -268,13 +274,67 @@ def ai_generation_page():
                 - Charts represented as styled progress bars or visual elements
                 - Professional fonts and typography
                 
-                The business should be for a fictional innovative tech startup. Make the numbers realistic but impressive.
+                Make the numbers realistic but impressive. Base the business plan on the uploaded documents if available.
                 Return ONLY the complete HTML code, no markdown formatting.
+                """
+                # Assuming 'context' is already defined as in your original code
+
+                slide_prompt = f"""
+                Act as an expert full-stack developer and UI/UX designer. Your specialty is creating stunning, data-driven web presentations that captivate audiences. Your task is to build a single, self-contained, and visually spectacular HTML presentation slide for a high-stakes investor pitch.
+
+                **CONTEXT FROM UPLOADED FILES:**
+                {context if context else "No context files were provided."}
+
+                **INSTRUCTIONS:**
+
+                **1. Core Content Strategy (for a SINGLE SLIDE):**
+                - **Headline:** A powerful, concise headline that grabs attention.
+                - **The Hook:** A 1-2 sentence summary of the core value proposition.
+                - **Key Metrics (3-4 max):** Showcase the most impressive data points using dynamic charts.
+                - **The Ask:** Clearly state the investment amount being sought and its primary purpose.
+
+                **2. Design & Technical Specifications:**
+
+                **A. Frameworks & Libraries (MUST USE):**
+                You must include the following via their CDNs within the HTML `<head>` or before `</body>` as appropriate:
+                - **Tailwind CSS:** For all styling.
+                - **Google Fonts:** For the 'Inter' font family.
+                - **Google Material Symbols:** For all iconography.
+                - **AOS (Animate On Scroll):** For subtle on-load animations.
+                - **Chart.js:** For creating beautiful, animated data visualizations.
+
+                **B. Layout & Styling:**
+                - **Layout:** Use a sophisticated, asymmetrical grid layout. Ensure a strong visual hierarchy that guides the viewer's eye.
+                - **Color Palette:** Implement a professional dark theme. Use a subtle, dark gradient background (e.g., `bg-gradient-to-br from-gray-900 via-black to-blue-900`). Use a single, vibrant accent color (e.g., `#00FFA3` for a neon mint) for CTAs, highlights, and chart elements.
+                - **Animation:** Use the **AOS library** to add elegant fade-in or slide-in animations to elements as they load. For example: `data-aos="fade-up"` and `data-aos-delay="200"`. Initialize AOS in the script tag.
+
+                **C. Typography:**
+                - Use the 'Inter' font from Google Fonts.
+                - Use a range of font weights (e.g., 300 for paragraphs, 700 for headlines) to create clear contrast and hierarchy.
+
+                **D. Iconography:**
+                - **Primary Method:** Use **Google Material Symbols**. Link the stylesheet in the `<head>`. Implement icons using `<span class="material-symbols-outlined">rocket_launch</span>`. The icons should be sharp, clear, and complement the content.
+                - **Fallback Method:** Only use inline SVGs if a highly custom visual (like a unique logo) is absolutely necessary.
+
+                **E. Data Visualization:**
+                - **DO NOT use static text or tables for key metrics.**
+                - Use **Chart.js** to create 3-4 small, clean, and animated charts (e.g., doughnut or pie charts for percentages, small bar charts for growth).
+                - Each chart should be placed within its own "card" element with a title.
+                - The charts must be animated on load (default for Chart.js) and use the chosen accent color.
+
+                **3. Fallback Scenario:**
+                - If no context is provided, invent a compelling fictional tech startup. Be specific and modern. Examples: "Aether," a decentralized cloud storage solution, or "Oasis," an AI-powered platform for urban vertical farming.
+
+                **4. Final Output:**
+                - Return ONLY the complete, self-contained HTML file.
+                - The response must start with `<!DOCTYPE html>` and end with `</html>`.
+                - All CSS (via Tailwind) and JavaScript (for AOS and Chart.js initialization) must be correctly included to make the file work perfectly when opened in a browser.
+                - The JavaScript for initializing the libraries and charts should be in a single `<script>` tag before the closing `</body>` tag.
                 """
                 
                 response = client.chat.completions.create(
                     model=deployment_name,
-                    messages=[{"role": "user", "content": business_plan_prompt}],
+                    messages=[{"role": "user", "content": slide_prompt}],
                     temperature=0.8,
                     max_tokens=3000
                 )
