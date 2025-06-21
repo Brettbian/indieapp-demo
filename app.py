@@ -104,12 +104,84 @@ def file_upload_page():
                 
             content = st.session_state.uploaded_files_content[filename]
             
+            # Get file extension and icon
+            file_ext = filename.split('.')[-1].upper() if '.' in filename else 'FILE'
+            
+            # Define file type colors and icons
+            file_type_config = {
+                'PDF': {'icon': '📕', 'color': '#dc3545', 'bg_color': '#f8d7da'},
+                'DOC': {'icon': '📘', 'color': '#0d6efd', 'bg_color': '#cce7ff'}, 
+                'DOCX': {'icon': '📘', 'color': '#0d6efd', 'bg_color': '#cce7ff'},
+                'TXT': {'icon': '📝', 'color': '#6c757d', 'bg_color': '#e9ecef'},
+                'MD': {'icon': '📝', 'color': '#6c757d', 'bg_color': '#e9ecef'},
+                'XLSX': {'icon': '📊', 'color': '#198754', 'bg_color': '#d1eddb'},
+                'XLS': {'icon': '📊', 'color': '#198754', 'bg_color': '#d1eddb'},
+                'CSV': {'icon': '📊', 'color': '#198754', 'bg_color': '#d1eddb'},
+                'PPTX': {'icon': '📈', 'color': '#fd7e14', 'bg_color': '#ffe5cc'},
+                'PPT': {'icon': '📈', 'color': '#fd7e14', 'bg_color': '#ffe5cc'},
+                'HTML': {'icon': '🌐', 'color': '#6610f2', 'bg_color': '#e0cffc'},
+                'HTM': {'icon': '🌐', 'color': '#6610f2', 'bg_color': '#e0cffc'},
+            }
+            
+            config = file_type_config.get(file_ext, {'icon': '📄', 'color': '#6c757d', 'bg_color': '#e9ecef'})
+            
             # Create row with filename and delete button
             col1, col2 = st.columns([5, 1])
             
             with col1:
-                # Use expander with filename
-                with st.expander(f"📄 {filename}"):
+                # Enhanced expander header with file type badge
+                expander_header = f"""
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 18px;">{config['icon']}</span>
+                    <span style="font-weight: 500;">{filename}</span>
+                    <span style="
+                        background-color: {config['bg_color']}; 
+                        color: {config['color']}; 
+                        padding: 2px 8px; 
+                        border-radius: 12px; 
+                        font-size: 11px; 
+                        font-weight: bold;
+                        border: 1px solid {config['color']}40;
+                    ">{file_ext}</span>
+                </div>
+                """
+                
+                # Use expander with enhanced header
+                with st.expander(f"{config['icon']} {filename}", expanded=False):
+                    # Show file type badge and stats at the top
+                    st.markdown(
+                        f"""
+                        <div style="
+                            display: flex; 
+                            justify-content: space-between; 
+                            align-items: center; 
+                            margin-bottom: 10px;
+                            padding: 8px;
+                            background-color: {config['bg_color']};
+                            border-radius: 5px;
+                            border-left: 4px solid {config['color']};
+                        ">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="
+                                    background-color: {config['color']}; 
+                                    color: white; 
+                                    padding: 4px 8px; 
+                                    border-radius: 12px; 
+                                    font-size: 11px; 
+                                    font-weight: bold;
+                                ">{file_ext}</span>
+                                <span style="font-size: 12px; color: #6c757d;">
+                                    {len(content):,} characters
+                                </span>
+                            </div>
+                            <span style="font-size: 12px; color: #6c757d;">
+                                {round(len(content.encode('utf-8')) / 1024, 1)} KB
+                            </span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    
                     st.markdown("**Markdown Preview:**")
                     
                     # Create scrollable container for markdown content
@@ -124,15 +196,14 @@ def file_upload_page():
                             background-color: #f9f9f9;
                             font-family: monospace;
                             white-space: pre-wrap;
+                            font-size: 12px;
+                            line-height: 1.4;
                         ">
                         {html.escape(content)}
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
-                    
-                    # Show file stats
-                    st.caption(f"File size: {len(content):,} characters")
             
             with col2:
                 # Delete button aligned with expander header
