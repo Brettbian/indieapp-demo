@@ -4,6 +4,7 @@ from markitdown import MarkItDown
 from openai import AzureOpenAI
 import tempfile
 import html
+from prompts import get_business_canvas_prompt, get_value_proposition_prompt
 
 st.set_page_config(
     page_title="IndieApp Demo",
@@ -240,7 +241,15 @@ def ai_generation_page():
                         del st.session_state.uploaded_files_content[filename]
                         st.rerun()
     
-    if st.button("🚀 Generate Business Plan", type="primary"):
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        generate_business_plan = st.button("🚀 Generate Business Plan", type="primary", use_container_width=True)
+    
+    with col2:
+        generate_value_prop = st.button("💎 Generate Value Proposition", type="primary", use_container_width=True)
+    
+    if generate_business_plan:
         with st.spinner("Generating your stunning business plan... DO NOT GO AWAY!"):
             try:
                 # Build context from uploaded files
@@ -248,189 +257,7 @@ def ai_generation_page():
                 if st.session_state.uploaded_files_content:
                     context = "\n\nCONTEXT FROM UPLOADED FILES:\n" + "\n\n".join([f"File: {filename}\n{content}" for filename, content in st.session_state.uploaded_files_content.items()])
                 
-            
-                # Assuming 'context' is already defined as in your original code
-
-                canvas_prompt = f"""
-                Act as an expert business strategist and senior frontend developer. Your task is to create a complete, visually clean, and well-structured HTML Business Model Canvas based on the provided context. The final output must be a single, self-contained HTML file.
-
-                **CONTEXT FROM UPLOADED FILES:**
-                {context if context else "No context files were provided."}
-
-                **--- CORE TASK & INSTRUCTIONS ---**
-
-                **1. Analyze and Populate:**
-                - Carefully analyze the business information provided in the "CONTEXT" section.
-                - Populate all nine sections of the Business Model Canvas with relevant, concise bullet points derived from the context. The content should be strategic and to the point.
-
-                **2. Fallback Scenario:**
-                - If no context is provided, invent a compelling and detailed fictional tech startup. Do not use a generic example. Be specific, e.g., "AstraFlow," a platform that uses AI to automate and optimize supply chain logistics for e-commerce businesses. Then, fill out the canvas for this fictional company.
-
-                **--- DESIGN & TECHNICAL REQUIREMENTS ---**
-
-                **1. Frameworks and Libraries (MUST USE):**
-                - **Tailwind CSS:** For all styling, loaded from the CDN.
-                - **Google Fonts:** For the 'Inter' font family.
-                - **Google Material Symbols (Outlined):** For all icons, loaded from the Google Fonts CDN.
-
-                **2. Layout (CRITICAL):**
-                - You MUST use the exact HTML structure and CSS Grid layout provided in the template below.
-                - The canvas must be responsive, collapsing gracefully into a single column on smaller screens (e.g., mobile). Use Tailwind's responsive prefixes (`sm:`, `md:`, `lg:`).
-
-                **3. Styling:**
-                - Adhere to a clean, professional, and minimalist design inspired by the Strategyzer canvas.
-                - Each canvas section (grid-item) should be a card with a light background (`bg-gray-50` or `bg-white`), rounded corners (`rounded-lg`), and a subtle box shadow (`shadow-md`).
-                - Use a professional color for the icon and title in each section (e.g., `text-gray-700`).
-                - Ensure excellent padding and spacing throughout for readability.
-
-                **4. Iconography:**
-                - You MUST use the specific Google Material Symbols defined within the HTML template. Implement them using `<span class="material-symbols-outlined">icon_name</span>`.
-
-                **5. Warning:**
-                - ONLY OUTPUT THE HTML CODE, NO OTHER TEXT OR MARKDOWN.
-
-                **--- HTML TEMPLATE (USE THIS EXACT STRUCTURE) ---**
-
-                You must use this template as the foundation for your response. Populate the `<ul>` elements with the business content.
-
-                ```html
-                <!DOCTYPE html>
-                <html lang="en">
-                <head>
-                    <meta charset="UTF-8">
-                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                    <title>Business Model Canvas</title>
-                    <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
-                    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)">
-                    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin>
-                    <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap)" rel="stylesheet">
-                    <link rel="stylesheet" href="[https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200](https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200)" />
-                    <style>
-                        body {{ font-family: 'Inter', sans-serif; }}
-                        .material-symbols-outlined {{ font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; font-size: 28px; }}
-                        /* Responsive grid layout */
-                        .canvas-grid {{
-                            display: grid;
-                            grid-template-columns: repeat(1, 1fr);
-                            gap: 1rem;
-                        }}
-                        @media (min-width: 1024px) {{
-                            .canvas-grid {{
-                                grid-template-columns: repeat(5, 1fr);
-                                grid-template-rows: auto auto auto;
-                            }}
-                            .grid-item-kp {{ grid-column: 1 / 2; grid-row: 1 / 3; }}
-                            .grid-item-ka {{ grid-column: 2 / 3; grid-row: 1 / 2; }}
-                            .grid-item-vp {{ grid-column: 3 / 4; grid-row: 1 / 3; }}
-                            .grid-item-cr {{ grid-column: 4 / 5; grid-row: 1 / 2; }}
-                            .grid-item-cs {{ grid-column: 5 / 6; grid-row: 1 / 3; }}
-                            .grid-item-kr {{ grid-column: 2 / 3; grid-row: 2 / 3; }}
-                            .grid-item-ch {{ grid-column: 4 / 5; grid-row: 2 / 3; }}
-                            .grid-item-cst {{ grid-column: 1 / 4; grid-row: 3 / 4; }}
-                            .grid-item-rs {{ grid-column: 4 / 6; grid-row: 3 / 4; }}
-                        }}
-                    </style>
-                </head>
-                <body class="bg-gray-100 p-4 sm:p-6 lg:p-8">
-
-                    <div class="max-w-7xl mx-auto">
-                        <header class="mb-8">
-                            <h1 class="text-3xl font-bold text-gray-800">Business Model Canvas</h1>
-                            <div class="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600 mt-2">
-                                <p><span class="font-semibold">Designed for:</span> [Company Name]</p>
-                                <p><span class="font-semibold">Date:</span> [Current Date]</p>
-                                <p><span class="font-semibold">Version:</span> 1.0</p>
-                            </div>
-                        </header>
-
-                        <main class="canvas-grid">
-                            <section class="grid-item-kp bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-blue-600">handshake</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Key Partners</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-
-                            <section class="grid-item-ka bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-green-600">checklist</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Key Activities</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-
-                            <section class="grid-item-vp bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-purple-600">redeem</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Value Propositions</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-
-                            <section class="grid-item-cr bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-red-600">favorite</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Customer Relationships</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-                            
-                            <section class="grid-item-cs bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-orange-600">groups</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Customer Segments</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-
-                            <section class="grid-item-kr bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-green-600">build_circle</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Key Resources</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-
-                            <section class="grid-item-ch bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-red-600">local_shipping</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Channels</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-
-                            <section class="grid-item-cst bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-cyan-600">payments</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Cost Structure</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-                            
-                            <section class="grid-item-rs bg-white p-4 rounded-lg shadow-md flex flex-col">
-                                <div class="flex items-center gap-3 mb-3">
-                                    <span class="material-symbols-outlined text-teal-600">attach_money</span>
-                                    <h2 class="text-lg font-semibold text-gray-800">Revenue Streams</h2>
-                                </div>
-                                <ul class="list-disc list-inside text-gray-700 text-sm space-y-1 flex-grow">
-                                    </ul>
-                            </section>
-                        </main>
-                    </div>
-                </body>
-                </html>
-                """
-
-    
+                canvas_prompt = get_business_canvas_prompt(context)
                 
                 response = client.chat.completions.create(
                     model=deployment_name,
@@ -460,6 +287,45 @@ def ai_generation_page():
                 
             except Exception as e:
                 st.error(f"Error generating business plan: {str(e)}")
+    
+    if generate_value_prop:
+        with st.spinner("Generating your value proposition canvas..."):
+            try:
+                # Build context from uploaded files  
+                context = ""
+                if st.session_state.uploaded_files_content:
+                    context = "\n\nCONTEXT FROM UPLOADED FILES:\n" + "\n\n".join([f"File: {filename}\n{content}" for filename, content in st.session_state.uploaded_files_content.items()])
+                
+                vpc_prompt = get_value_proposition_prompt(context)
+                
+                response = client.chat.completions.create(
+                    model=deployment_name,
+                    messages=[{"role": "user", "content": vpc_prompt}],
+                    temperature=0.8,
+                    max_tokens=3000
+                )
+                
+                html_content = response.choices[0].message.content
+                
+                # Clean up any markdown formatting
+                if html_content.startswith('```html'):
+                    html_content = html_content.replace('```html', '').replace('```', '')
+                
+                st.subheader("💎 Your Generated Value Proposition Canvas")
+                
+                # Display the HTML
+                st.components.v1.html(html_content, height=800, scrolling=True)
+                
+                # Also provide download option
+                st.download_button(
+                    label="💾 Download Value Proposition Canvas HTML",
+                    data=html_content,
+                    file_name="value_proposition_canvas.html",
+                    mime="text/html"
+                )
+                
+            except Exception as e:
+                st.error(f"Error generating value proposition canvas: {str(e)}")
 
 def settings_page():
     st.title("⚙️ Settings")
